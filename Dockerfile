@@ -1,9 +1,9 @@
 # Use latest stable channel SDK.
-FROM debian:bookworm-slim AS build
+FROM dart:stable AS build
 
 # Add PATH Go Lang & Dart
 ENV PATH="/usr/local/go/bin:${PATH}"
-ENV PATH="/usr/lib/dart/bin:${PATH}"
+#ENV PATH="/usr/lib/dart/bin:${PATH}"
 ENV PATH="/root/.pub-cache/bin:${PATH}"
 
 # Update
@@ -23,9 +23,9 @@ RUN tar -C /usr/local -xzf /download/go1.21.5.linux-amd64.tar.gz
 RUN go version
 
 # Download Dart
-RUN wget -P /download https://storage.googleapis.com/dart-archive/channels/stable/release/latest/linux_packages/dart_3.2.4-1_amd64.deb
+#RUN wget -P /download https://storage.googleapis.com/dart-archive/channels/stable/release/latest/linux_packages/dart_3.2.4-1_amd64.deb
 # Install Dart
-RUN dpkg -i /download/dart_3.2.4-1_amd64.deb
+#RUN dpkg -i /download/dart_3.2.4-1_amd64.deb
 # Check Version Dart
 RUN dart --version
 
@@ -50,7 +50,24 @@ COPY . .
 RUN dart compile exe bin/server.dart -o bin/server
 RUN ffi-lib mongo_go
 
+
+# Start server.
+#EXPOSE 8080
+#CMD ["/app/bin/server"]
+#CMD ["bash", "-c", "while true; do sleep 1; done"]
+
+
+# Build minimal serving image from AOT-compiled `/server`
+# and the pre-built AOT-runtime in the `/runtime/` directory of the base image.
+FROM alpine:latest
+COPY --from=build /runtime/ /
+COPY --from=build /app/bin/server /app/bin/
+COPY --from=build /app/bin/mongo_go.so /app/bin/
+
+RUN apk update
+RUN apk add go
+RUN apk add gcc
+
 # Start server.
 EXPOSE 8080
 CMD ["/app/bin/server"]
-#CMD ["bash", "-c", "while true; do sleep 1; done"]
