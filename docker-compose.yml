@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  godart-mongodb:
+    image: mongo:latest
+    container_name: godart-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ahfastrans
+      MONGO_INITDB_ROOT_PASSWORD: ahfast.co
+    volumes:
+      - "godart-volume:/data/db"
+      - "godart-volume:/data/configdb"
+    networks:
+      - godart-net
+
+  godart-app:
+    image: godart:latest
+    container_name: godart-app
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - godart-net
+
+networks:
+  godart-net:
+    driver: bridge
+
+volumes:
+  godart-volume:
